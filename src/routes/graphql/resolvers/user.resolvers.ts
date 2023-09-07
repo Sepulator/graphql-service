@@ -1,7 +1,17 @@
-import { UserInput } from '../types/user.js';
-import { Context, ID, NoArgs, Subscription } from '../types/common.js';
-import { parseResolveInfo } from 'graphql-parse-resolve-info';
-import { GraphQLResolveInfo } from 'graphql';
+import { UserInput, userType } from '../types/user.js';
+import {
+  Context,
+  ID,
+  NoArgs,
+  Subscription,
+  SubscriptionMutationInput,
+} from '../types/common.js';
+import {
+  ResolveTree,
+  parseResolveInfo,
+  simplifyParsedResolveInfoFragmentWithType,
+} from 'graphql-parse-resolve-info';
+import { GraphQLList, GraphQLResolveInfo } from 'graphql';
 
 export const getUser = async ({ id }: ID, { prisma }: Context) => {
   const user = await prisma.user.findUnique({ where: { id } });
@@ -64,7 +74,7 @@ const deleteUser = async ({ id }: ID, { prisma }: Context) => {
 };
 
 const subscribeTo = async (
-  { userId: id, authorId }: Subscription,
+  { userId: id, authorId }: SubscriptionMutationInput,
   { prisma }: Context,
 ) => {
   try {
@@ -79,7 +89,7 @@ const subscribeTo = async (
 };
 
 const unsubscribeFrom = async (
-  { userId: subscriberId, authorId }: Subscription,
+  { userId: subscriberId, authorId }: SubscriptionMutationInput,
   { prisma }: Context,
 ) => {
   try {
