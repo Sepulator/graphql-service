@@ -9,7 +9,6 @@ import { UUIDType } from './uuid.js';
 import { memberType, memberTypeIdEnum } from './member.js';
 import { Context, ID, NoArgs } from './common.js';
 import { MemberTypeId } from '../../member-types/schemas.js';
-import { getMemberType } from '../resolvers/member.resolvers.js';
 import { userType } from './user.js';
 import { getUser } from '../resolvers/user.resolvers.js';
 

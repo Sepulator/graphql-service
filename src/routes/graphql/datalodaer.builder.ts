@@ -13,6 +13,26 @@ export interface DataLoaders {
 }
 
 export const buildDataLoaders = (prisma: PrismaClient): DataLoaders => {
+  const batchGetUserById = async (ids: readonly string[]) => {
+    const users = await prisma.user.findMany({
+      where: { id: { in: ids as string[] } },
+      include: {
+        userSubscribedTo: true,
+        subscribedToUser: true,
+      },
+    });
+
+    const userMap = users.reduce(
+      (acc, user) => {
+        acc[user.id] = user;
+        return acc;
+      },
+      {} as Record<string, User>,
+    );
+
+    return ids.map((id) => userMap[id]);
+  };
+
   const batchGetPostsByAuthorId = async (ids: readonly string[]) => {
     const posts = await prisma.post.findMany({
       where: { authorId: { in: ids as string[] } },
@@ -31,7 +51,7 @@ export const buildDataLoaders = (prisma: PrismaClient): DataLoaders => {
     return ids.map((id) => postMap[id]);
   };
 
-  const batchGetProfileByUserrId = async (ids: readonly string[]) => {
+  const batchGetProfileByUserId = async (ids: readonly string[]) => {
     const profiles = await prisma.profile.findMany({
       where: { userId: { in: ids as string[] } },
     });
@@ -83,50 +103,11 @@ export const buildDataLoaders = (prisma: PrismaClient): DataLoaders => {
     return ids.map((id) => memberTypeMap[id]);
   };
 
-  const batchGetUserSubscriptions = async (ids: readonly string[]) => {
-    const users = await prisma.user.findMany({
-      where: { subscribedToUser: { some: { subscriberId: { in: ids as string[] } } } },
-      include: { subscribedToUser: { select: { subscriberId: true } } },
-    });
-
-    const usersMap = users.reduce(
-      (acc, { subscribedToUser, ...user }) => {
-        subscribedToUser.forEach(({ subscriberId }) => {
-          acc[subscriberId] ? acc[subscriberId].push(user) : (acc[subscriberId] = [user]);
-        });
-        return acc;
-      },
-      {} as Record<string, User[]>,
-    );
-
-    return ids.map((id) => usersMap[id]);
-  };
-
-  const batchGetUserFollowers = async (ids: readonly string[]) => {
-    const users = await prisma.user.findMany({
-      where: { userSubscribedTo: { some: { authorId: { in: ids as string[] } } } },
-      include: { userSubscribedTo: { select: { authorId: true } } },
-    });
-
-    const userMap = users.reduce(
-      (acc, { userSubscribedTo, ...user }) => {
-        userSubscribedTo.forEach(({ authorId }) => {
-          acc[authorId] ? acc[authorId].push(user) : (acc[authorId] = [user]);
-        });
-        return acc;
-      },
-      {} as Record<string, User[]>,
-    );
-
-    return ids.map((id) => userMap[id]);
-  };
-
   return {
     postsByAuthorIdLoader: new DataLoader(batchGetPostsByAuthorId),
-    profileByUserIdLoader: new DataLoader(batchGetProfileByUserrId),
+    profileByUserIdLoader: new DataLoader(batchGetProfileByUserId),
     profilesByMemberTypeIdLoader: new DataLoader(batchGetProfilesByMemberTypeId),
     memberTypeLoader: new DataLoader(batchGetMemberType),
-    userSubscriptionsLoader: new DataLoader(batchGetUserSubscriptions),
-    userFollowersLoader: new DataLoader(batchGetUserFollowers),
+    userLoader: new DataLoader(batchGetUserById),
   };
 };

@@ -8,7 +8,6 @@ import {
 } from 'graphql';
 import { MemberTypeId } from '../../member-types/schemas.js';
 import { profileType } from './profile.js';
-import { getProfilesByMemberTypeId } from '../resolvers/profile.resolvers.js';
 import { Context, NoArgs } from './common.js';
 
 interface MemberType {
