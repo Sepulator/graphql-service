@@ -1,10 +1,20 @@
 import { Type } from '@fastify/type-provider-typebox';
-import { GraphQLList, GraphQLNonNull, GraphQLObjectType, GraphQLSchema, GraphQLString } from 'graphql';
+import {
+  GraphQLList,
+  GraphQLNonNull,
+  GraphQLObjectType,
+  GraphQLSchema,
+  GraphQLString,
+} from 'graphql';
 import { UUIDType } from './types/uuid.js';
 import { userType, createUserInputType, changeUserInputType } from './types/user.js';
 import { memberType, memberTypeIdEnum } from './types/member.js';
 import { changePostInputType, createPostInputType, postType } from './types/post.js';
-import { changeProfileInputType, createProfileInputType, profileType } from './types/profile.js';
+import {
+  changeProfileInputType,
+  createProfileInputType,
+  profileType,
+} from './types/profile.js';
 
 export const gqlResponseSchema = Type.Partial(
   Type.Object({

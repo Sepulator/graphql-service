@@ -1,9 +1,9 @@
 import { PrismaClient } from '@prisma/client'
+import { DataLoaders } from '../datalodaer.builder.js';
 
-export interface Context {
-  prisma: PrismaClient
+export interface Context extends DataLoaders {
+  prisma: PrismaClient;
 }
-
 export interface ID {
   id: string;
 };

@@ -1,13 +1,36 @@
-import { UserInput } from "../types/user.js";
-import { Context, ID, NoArgs, Subscription } from "../types/common.js";
+import { UserInput } from '../types/user.js';
+import { Context, ID, NoArgs, Subscription } from '../types/common.js';
+import { parseResolveInfo } from 'graphql-parse-resolve-info';
+import { GraphQLResolveInfo } from 'graphql';
 
 export const getUser = async ({ id }: ID, { prisma }: Context) => {
   const user = await prisma.user.findUnique({ where: { id } });
   return user;
 };
 
-const getUsers = async (_: NoArgs, { prisma }: Context) => {
-  const users = await prisma.user.findMany();
+const getUsers = async (
+  _: NoArgs,
+  { prisma, userLoader }: Context,
+  resolveInfo: GraphQLResolveInfo,
+) => {
+  const parsedResolveInfoFragment = parseResolveInfo(resolveInfo);
+  const { fields }: { fields: { [key in string]: ResolveTree } } =
+    simplifyParsedResolveInfoFragmentWithType(
+      parsedResolveInfoFragment as ResolveTree,
+      new GraphQLList(userType),
+    );
+
+  const users = await prisma.user.findMany({
+    include: {
+      userSubscribedTo: !!fields.userSubscribedTo,
+      subscribedToUser: !!fields.subscribedToUser,
+    },
+  });
+
+  users.forEach((user) => {
+    userLoader.prime(user.id, user);
+  });
+
   return users;
 };
 
@@ -16,11 +39,14 @@ const createUser = async ({ dto: data }: { dto: UserInput }, { prisma }: Context
   return user;
 };
 
-const changeUser = async ({ id, dto: data}: ID & { dto: Partial<UserInput> }, { prisma }: Context) => {
+const changeUser = async (
+  { id, dto: data }: ID & { dto: Partial<UserInput> },
+  { prisma }: Context,
+) => {
   try {
     const user = await prisma.user.update({
       where: { id },
-      data
+      data,
     });
     return user;
   } catch {
@@ -37,7 +63,10 @@ const deleteUser = async ({ id }: ID, { prisma }: Context) => {
   }
 };
 
-const subscribeTo = async ({ userId: id, authorId }: Subscription, { prisma }: Context) => {
+const subscribeTo = async (
+  { userId: id, authorId }: Subscription,
+  { prisma }: Context,
+) => {
   try {
     const user = prisma.user.update({
       where: { id },
@@ -49,7 +78,10 @@ const subscribeTo = async ({ userId: id, authorId }: Subscription, { prisma }: C
   }
 };
 
-const unsubscribeFrom = async ({ userId: subscriberId, authorId }: Subscription, { prisma }: Context) => {
+const unsubscribeFrom = async (
+  { userId: subscriberId, authorId }: Subscription,
+  { prisma }: Context,
+) => {
   try {
     await prisma.subscribersOnAuthors.delete({
       where: { subscriberId_authorId: { subscriberId, authorId } },
@@ -58,7 +90,6 @@ const unsubscribeFrom = async ({ userId: subscriberId, authorId }: Subscription,
     return null;
   }
 };
-
 
 export default {
   user: getUser,
@@ -71,15 +102,15 @@ export default {
 };
 
 export const getUserSubscriptions = async (subscriberId: string, { prisma }: Context) => {
-  const subscriptions = await prisma.user.findMany(
-    { where: { subscribedToUser: { some: { subscriberId } } } }
-  );
+  const subscriptions = await prisma.user.findMany({
+    where: { subscribedToUser: { some: { subscriberId } } },
+  });
   return subscriptions;
 };
 
 export const getUserFollowers = async (authorId: string, { prisma }: Context) => {
-  const followers = await prisma.user.findMany(
-    { where: { userSubscribedTo: { some: { authorId } } } }
-  );
+  const followers = await prisma.user.findMany({
+    where: { userSubscribedTo: { some: { authorId } } },
+  });
   return followers;
 };

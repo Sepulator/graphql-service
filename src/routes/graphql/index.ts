@@ -1,15 +1,12 @@
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox';
-import {
-  createGqlResponseSchema,
-  gqlResponseSchema,
-  gqlSchema,
-} from './schemas.js';
+import { createGqlResponseSchema, gqlResponseSchema, gqlSchema } from './schemas.js';
 import { graphql, parse, validate } from 'graphql';
 import userResolvers from './resolvers/user.resolvers.js';
 import postResolvers from './resolvers/post.resolvers.js';
 import profileResolvers from './resolvers/profile.resolvers.js';
 import memberResolvers from './resolvers/member.resolvers.js';
 import depthLimit from 'graphql-depth-limit';
+import { buildDataLoaders } from './datalodaer.builder.js';
 
 const rootValue = {
   ...userResolvers,
@@ -20,6 +17,7 @@ const rootValue = {
 
 const plugin: FastifyPluginAsyncTypebox = async (fastify) => {
   const { prisma } = fastify;
+  const dataLoaders = buildDataLoaders(prisma);
 
   fastify.route({
     url: '/',
@@ -44,7 +42,7 @@ const plugin: FastifyPluginAsyncTypebox = async (fastify) => {
         source: query,
         rootValue,
         variableValues: variables,
-        contextValue: { prisma }
+        contextValue: { prisma, ...dataLoaders },
       });
 
       return response;

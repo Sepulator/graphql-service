@@ -22,19 +22,19 @@ export const userType = new GraphQLObjectType({
     balance: { type: new GraphQLNonNull(GraphQLFloat) },
     profile: {
       type: profileType as GraphQLObjectType,
-      resolve: async(source: User, _: NoArgs, context: Context) => await getProfileByUserId(source.id, context),
+      resolve: async(source: User, _: NoArgs, { profileByUserIdLoader }: Context) => profileByUserIdLoader.load(source.id),
     },
     posts: {
       type: new GraphQLList(postType),
-      resolve: async(source: User, _: NoArgs, context: Context) => await getPostsByUserId(source.id, context),
+      resolve: async(source: User, _: NoArgs, { postsByAuthorIdLoader }: Context) => postsByAuthorIdLoader.load(source.id),
     },
     userSubscribedTo: {
       type: new GraphQLList(userType),
-      resolve :async (source: User, _: NoArgs, context: Context) => await getUserSubscriptions(source.id, context),
+      resolve: async (source: User, _: NoArgs, { userSubscriptionsLoader }: Context) => userSubscriptionsLoader.load(source.id),
     },
     subscribedToUser: {
       type: new GraphQLList(userType),
-      resolve: async (source: User, _: NoArgs, context: Context) => await getUserFollowers(source.id, context),
+      resolve: async (source: User, _: NoArgs, { userFollowersLoader}: Context) => userFollowersLoader.load(source.id),
     }
   }),
 });

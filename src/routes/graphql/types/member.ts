@@ -37,8 +37,11 @@ export const memberType = new GraphQLObjectType({
     postsLimitPerMonth: { type: new GraphQLNonNull(GraphQLInt) },
     profiles: {
       type: new GraphQLList(profileType),
-      resolve: async (source: MemberType, _: NoArgs, context: Context) =>
-        await getProfilesByMemberTypeId(source.id, context),
+      resolve: async (
+        source: MemberType,
+        _: NoArgs,
+        { profilesByMemberTypeIdLoader }: Context,
+      ) => profilesByMemberTypeIdLoader.load(source.id),
     },
   }),
 });

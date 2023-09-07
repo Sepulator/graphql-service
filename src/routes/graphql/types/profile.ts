@@ -30,8 +30,8 @@ export const profileType = new GraphQLObjectType({
     yearOfBirth: { type: new GraphQLNonNull(GraphQLInt) },
     memberType: {
       type: new GraphQLNonNull(memberType),
-      resolve: async (source: Profile, _: NoArgs, context: Context) =>
-        await getMemberType({ id: source.memberTypeId }, context),
+      resolve: async (source: Profile, _: NoArgs, { memberTypeLoader }: Context) =>
+        memberTypeLoader.load(source.memberTypeId),
     },
     user: {
       type: userType as GraphQLObjectType,
